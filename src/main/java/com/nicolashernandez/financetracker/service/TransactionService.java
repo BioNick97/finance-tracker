@@ -51,7 +51,7 @@ public class TransactionService {
 
         throw new ResponseStatusException(
                 HttpStatus.NOT_FOUND,
-                "Transaction not found"
+                "Transaction Not Found"
         );
     }
 
