@@ -1,11 +1,6 @@
 package com.nicolashernandez.financetracker.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "transactions")
@@ -36,4 +32,18 @@ public class Transaction {
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be at least 0.01")
     private BigDecimal amount;
+
+    @NotNull(message = "Transaction date is required")
+    @Column(nullable = false)
+    private LocalDate transactionDate;
+
+    @NotNull(message = "Transaction type is required")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TransactionType type;
+
+    @NotBlank(message = "Category is required")
+    @Column(nullable = false, length = 50)
+    private String category;
+
 }
