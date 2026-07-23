@@ -37,13 +37,8 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDate transactionDate;
 
-    @NotNull(message = "Transaction type is required")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionType type;
-
-    @NotBlank(message = "Category is required")
-    @Column(nullable = false, length = 50)
-    private String category;
-
+    @NotNull(message = "Category is required")
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
 }

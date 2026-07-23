@@ -2,6 +2,8 @@ package com.nicolashernandez.financetracker.service;
 
 import com.nicolashernandez.financetracker.model.Transaction;
 import com.nicolashernandez.financetracker.repository.TransactionRepository;
+import com.nicolashernandez.financetracker.model.Category;
+import com.nicolashernandez.financetracker.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.Optional;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final CategoryRepository categoryRepository;
 
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
@@ -22,6 +25,24 @@ public class TransactionService {
 
     public Transaction createTransaction(Transaction transaction) {
         transaction.setId(null);//Must be null if creating new
+
+        if (transaction.getCategory() == null ||
+                transaction.getCategory().getId() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Category ID is required"
+            );
+        }
+        Category category = categoryRepository
+                .findById(transaction.getCategory().getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Category Not Found"
+                ));
+
+        transaction.setCategory(category);
+
         return transactionRepository.save(transaction);
     }
 
@@ -31,12 +52,35 @@ public class TransactionService {
     ) {
         Transaction existingTransaction = getTransaction(id);
 
+        if (updatedTransaction.getCategory() == null ||
+                updatedTransaction.getCategory().getId() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Category ID is required"
+            );
+        }
+
+        Category category = categoryRepository
+                .findById(updatedTransaction.getCategory().getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Category Not Found"
+                ));
+
         existingTransaction.setDescription(
                 updatedTransaction.getDescription()
         );
+
         existingTransaction.setAmount(
                 updatedTransaction.getAmount()
         );
+
+        existingTransaction.setTransactionDate(
+                updatedTransaction.getTransactionDate()
+        );
+
+        existingTransaction.setCategory(category);
 
         return transactionRepository.save(existingTransaction);
     }
