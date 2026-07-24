@@ -26,21 +26,8 @@ public class TransactionService {
     public Transaction createTransaction(Transaction transaction) {
         transaction.setId(null);//Must be null if creating new
 
-        if (transaction.getCategory() == null ||
-                transaction.getCategory().getId() == null) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Category ID is required"
-            );
-        }
-        Category category = categoryRepository
-                .findById(transaction.getCategory().getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Category Not Found"
-                ));
-
+        //Verifies the category is valid.
+        Category category = getRequiredCategory(transaction);
         transaction.setCategory(category);
 
         return transactionRepository.save(transaction);
@@ -52,21 +39,7 @@ public class TransactionService {
     ) {
         Transaction existingTransaction = getTransaction(id);
 
-        if (updatedTransaction.getCategory() == null ||
-                updatedTransaction.getCategory().getId() == null) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Category ID is required"
-            );
-        }
-
-        Category category = categoryRepository
-                .findById(updatedTransaction.getCategory().getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Category Not Found"
-                ));
+        Category category = getRequiredCategory(updatedTransaction);
 
         existingTransaction.setDescription(
                 updatedTransaction.getDescription()
@@ -102,5 +75,31 @@ public class TransactionService {
     public void deleteTransaction(Long id) {
         Transaction existingTransaction = getTransaction(id);
         transactionRepository.delete(existingTransaction);
+    }
+
+    //Helper Methods
+    private Category getRequiredCategory(Transaction transaction) {
+        if (transaction.getCategory() == null ||
+                transaction.getCategory().getId() == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Category ID is required"
+            );
+        }
+
+        Optional<Category> result =
+                categoryRepository.findById(
+                        transaction.getCategory().getId()
+                );
+
+        if (result.isPresent()) {
+            return result.get();
+        }
+
+        throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Category Not Found"
+        );
     }
 }
