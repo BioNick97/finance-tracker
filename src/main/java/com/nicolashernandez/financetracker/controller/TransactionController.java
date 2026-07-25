@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.YearMonth;
 import java.util.List;
 
 @RestController
@@ -17,8 +18,28 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @GetMapping
-    public List<Transaction> getAllTransactions() {
+    public List<Transaction> getAllTransactions(
+            @RequestParam(name = "month",required = false) YearMonth month,
+            @RequestParam(name = "categoryId",required = false) Long categoryId)
+    {
+
+        if (month != null && categoryId != null) {
+            return transactionService.getTransactionsByMonthAndCategory(
+                    month,
+                    categoryId
+            );
+        }
+
+        if (categoryId != null) {
+            return transactionService.getTransactionsByCategory(categoryId);
+        }
+
+
+        if (month != null) {
+            return transactionService.getTransactionsByMonth(month);
+        }
         return transactionService.getAllTransactions();
+
     }
 
     @GetMapping("/{id}")

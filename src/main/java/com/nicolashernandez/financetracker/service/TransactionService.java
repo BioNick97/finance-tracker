@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +23,17 @@ public class TransactionService {
 
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
+    }
+
+    public List<Transaction> getTransactionsByMonth(YearMonth month) {// YYYY-MM in this case
+        LocalDate startDate = month.atDay(1);//At first day of that month and Year
+        LocalDate endDate = month.atEndOfMonth();//The last day of that month and year.
+
+        //Calls the Repository Interface. Where things are passed on to the DataBase
+        return transactionRepository.findByTransactionDateBetween(
+                startDate,
+                endDate
+        );
     }
 
     public Transaction createTransaction(Transaction transaction) {
@@ -101,5 +114,23 @@ public class TransactionService {
                 HttpStatus.NOT_FOUND,
                 "Category Not Found"
         );
+    }
+
+    public List<Transaction> getTransactionsByMonthAndCategory(YearMonth month, Long categoryId) {
+        LocalDate startDate = month.atDay(1);
+        LocalDate endDate = month.atEndOfMonth();
+
+        return transactionRepository.findByTransactionDateBetweenAndCategory_Id(
+                startDate,
+                endDate,
+                categoryId
+        );
+
+
+    }
+
+    public List<Transaction> getTransactionsByCategory(Long categoryId) {
+        return transactionRepository.findByCategory_Id(categoryId);
+
     }
 }
