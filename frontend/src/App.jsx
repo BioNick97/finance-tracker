@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
-import {getTransactions, deleteTransaction, createTransaction} from "./services/financeApi";
+import {getTransactions, deleteTransaction, createTransaction, getCategories} from "./services/financeApi";
+
 import "./App.css";
 
 function App() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [description, setDescription] = useState("");
+    const [amount, setAmount] = useState("");
+    const [transactionDate, setTransactionDate] = useState("");
+    const [categories, setCategories] = useState([]);
+    const [categoryId, setCategoryId] = useState("");
+
 
     useEffect(() => {
 
@@ -21,6 +29,19 @@ function App() {
         }
 
         loadTransactions();
+        
+    }, []);
+    useEffect(() => {
+        async function loadCategories() {
+            try {
+                const data = await getCategories();
+                setCategories(data);
+            } catch (requestError) {
+                setError(requestError.message);
+            }
+        }
+
+        loadCategories();
     }, []);
 
     async function handleDelete(id){
@@ -33,7 +54,7 @@ function App() {
         }
     }
 
-    async function handleCreate(transaction){
+    async function doCreate(transaction){
         try{
             await createTransaction(transaction);
             const data = await getTransactions();
@@ -62,9 +83,11 @@ function App() {
                             <th>Description</th>
                             <th>Category</th>
                             <th>Amount</th>
-                            <th>Actions</th>
+                            <th>Actions<button onClick={() => setIsCreateOpen(true)}>New</button>
+                            </th>
 
                         </tr>
+
                     </thead>
                     <tbody>
                         {transactions.map((transaction) => (
@@ -79,6 +102,39 @@ function App() {
                     </tbody>
                 </table>
             )}
+            {isCreateOpen && (
+                <div>
+                    <form onSubmit={(event)=>event.preventDefault()}>
+
+                        <h2>New Transaction</h2>
+                        <div>
+                            <label htmlFor="description">Description:</label>
+                            <input id="description" name="description" type="text"
+                                   value={description}
+                                   onChange={(event) => setDescription(event.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="amount">Amount:</label>
+                            <input id="amount" name="amount" type="number" step="0.01"
+                                   value={amount}
+                                   onChange={(event) => setAmount(event.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="transactionDate">Date:</label>
+                            <input id="transactionDate" name="transactionDate" type="date"
+                            value ={transactionDate}
+                            onChange={(event) => setTransactionDate(event.target.value)}/>
+                        </div>
+                        <button type="submit">Add</button>
+                        <button type="button" onClick={() => setIsCreateOpen(false)}>Cancel</button>
+
+                    </form>
+
+                </div>
+            )}
+
         </main>
     );
 }
