@@ -29,7 +29,7 @@ function App() {
         }
 
         loadTransactions();
-        
+
     }, []);
     useEffect(() => {
         async function loadCategories() {
@@ -63,6 +63,26 @@ function App() {
             setError(requestError.message);
         }
     }
+
+    async function handleSubmit(event) {
+        event.preventDefault();
+
+        const transaction = {
+            description: description,
+            amount: Number(amount),
+            transactionDate: transactionDate,
+            category: { id: Number(categoryId) }
+        };
+
+        await doCreate(transaction);
+
+        setDescription("");
+        setAmount("");
+        setTransactionDate("");
+        setCategoryId("");
+        setIsCreateOpen(false);
+    }
+
 
     return (
         <main>
@@ -104,7 +124,7 @@ function App() {
             )}
             {isCreateOpen && (
                 <div>
-                    <form onSubmit={(event)=>event.preventDefault()}>
+                    <form onSubmit={(event)=>handleSubmit(event)}>
 
                         <h2>New Transaction</h2>
                         <div>
@@ -127,9 +147,25 @@ function App() {
                             value ={transactionDate}
                             onChange={(event) => setTransactionDate(event.target.value)}/>
                         </div>
+                        <div>
+                            <label htmlFor="category">Category:</label>
+                            <select
+                                id="category"
+                                name="category"
+                                value={categoryId}
+                                onChange={(event => setCategoryId(event.target.value))}>
+                                <option value="">Select a category</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.id}>
+                                        {category.name}
+                                    </option>
+                                ))}
+
+                            </select>
+                        </div>
+
                         <button type="submit">Add</button>
                         <button type="button" onClick={() => setIsCreateOpen(false)}>Cancel</button>
-
                     </form>
 
                 </div>
