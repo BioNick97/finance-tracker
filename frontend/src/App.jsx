@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import {getTransactions, deleteTransaction, createTransaction, getCategories} from "./services/financeApi";
+import {
+    getTransactions,
+    deleteTransaction,
+    createTransaction,
+    getCategories,
+    updateTransaction
+} from "./services/financeApi";
 
 import "./App.css";
 
@@ -83,6 +89,26 @@ function App() {
         setIsCreateOpen(false);
     }
 
+    async function doUpdate(existingId, updatedTransaction){
+        try{
+            await updateTransaction(existingId, updatedTransaction);
+            const data = await getTransactions()
+            setTransactions(data);
+        }catch(requestError){
+            setError(requestError.message);
+        }
+    }
+
+    function handleFieldChange(id, field, value) {
+        setTransactions((previous) =>
+            previous.map((transaction) =>
+                transaction.id === id
+                    ? { ...transaction, [field]: value }
+                    : transaction
+            )
+        );
+    }
+
 
     return (
         <main>
@@ -112,11 +138,66 @@ function App() {
                     <tbody>
                         {transactions.map((transaction) => (
                             <tr key={transaction.id}>
-                                <td>{transaction.transactionDate}</td>
-                                <td>{transaction.description}</td>
-                                <td>{transaction.category.name}</td>
-                                <td>{transaction.amount}</td>
-                                <td><button onClick={() => handleDelete(transaction.id)}>Delete</button> </td>
+                                <td>
+                                    <input
+                                        type="date"
+                                        id="existingDate"
+                                        name="existingDate"
+                                        value={transaction.transactionDate}
+                                        onChange={(event) =>
+                                            handleFieldChange(transaction.id, "transactionDate", event.target.value)
+                                        }
+
+                                        size="10" />
+                                </td>
+                                <td>
+                                    <input
+                                        type="text"
+                                        id="existingDescription"
+                                        name="existingDescription"
+                                        value={transaction.description}
+                                        onChange={(event) =>
+                                            handleFieldChange(transaction.id, "description", event.target.value)
+                                        }
+                                        size="10" />
+                                </td>
+                                <td>
+                                    <select
+                                        id="existingCategory"
+                                        name="existingCategory"
+                                        value={transaction.category.id}
+                                        onChange={(event) => {
+                                            const chosen = categories.find(c => c.id === Number(event.target.value));
+
+                                            handleFieldChange(transaction.id, "category", chosen)
+                                        }}
+                                        >
+                                        {categories.map((category) => (
+                                            <option key={category.id} value={category.id}>
+                                                {category.name}
+                                            </option>
+                                        ))}
+
+                                    </select>
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        id="existingAmount"
+                                        name="existingAmount"
+                                        value={transaction.amount}
+                                        onChange={(event) =>
+                                            handleFieldChange(transaction.id, "amount", Number(event.target.value))
+                                        }
+                                        size="10" />
+                                    </td>
+                                <td>
+                                    <button onClick={() => doUpdate(transaction.id, transaction)}>Update</button>
+                                    <br/>
+                                    <button onClick={() => handleDelete(transaction.id)}>Delete</button>
+                                </td>
+
                             </tr>
                         ))}
                     </tbody>
