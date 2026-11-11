@@ -2,7 +2,7 @@ FINANCE TRACKER - LIVING PROJECT SOURCE AND PROGRESS LOG
 ========================================================
 
 Compiled: July 21, 2026
-Updated through: August 1, 2026
+Updated through: November 9, 2026
 Project owner: Nicolas Hernandez
 Repository: https://github.com/BioNick97/finance-tracker
 Base package: com.nicolashernandez.financetracker
@@ -2362,6 +2362,127 @@ Next recommended step:
 
 Replace the temporary JSON transaction display with the first finance dashboard
 view, beginning with monthly summary cards and a structured transaction list.
+
+
+30. NOVEMBER 9 UPDATE - SUMMARY ENDPOINT, TRANSACTION TABLE, AND CREATE FORM
+----------------------------------------------------------------------------
+
+This entry also records work committed since the August 1 update, which had
+not been logged: the monthly summary endpoint, the transaction table with
+delete, and the full frontend API client.
+
+What changed
+~~~~~~~~~~~~
+
+Commit a09f578 (Aug 5) - monthly summary endpoint:
+
+    GET /api/summary?month=2026-07
+
+  SummaryController, SummaryService, and a MonthlySummary DTO (month, income,
+  expenses, balance). SummaryService reuses
+  TransactionService.getTransactionsByMonth and totals amounts by the
+  category's type: INCOME adds to income, EXPENSE adds to expenses, and
+  balance = income - expenses. Money stays BigDecimal.
+
+Commit de06304 (Sep 29) - transaction table and API client:
+
+  The temporary JSON display was replaced by a table (Date, Description,
+  Category, Amount, Actions) with a Delete button per row.
+  frontend/src/services/financeApi.js now has getTransactions, getSummary,
+  getCategories, createTransaction, deleteTransaction, and updateTransaction.
+  deleteTransaction does not call response.json() because the backend returns
+  204 No Content. getSummary and updateTransaction exist but no UI uses them
+  yet.
+
+Commits 2fc0503 (Oct 25) and 0573d62 (Oct 26) - groundwork:
+
+  2fc0503 was a work-in-progress commit that included a scratch IDEA.md note;
+  0573d62 deleted IDEA.md, so it is not part of the project. 2fc0503 also
+  added the SummaryServiceTest stub described under known gaps.
+
+Commit ee047b0 (Nov 9) - create-transaction form:
+
+  frontend/src/App.jsx now has a New button in the Actions header that opens
+  an inline form (not yet a styled modal) with Description, Amount, Date, and
+  a Category dropdown.
+
+Decisions
+~~~~~~~~~
+
+- Creating is two events. The New button only opens the form
+  (isCreateOpen state, rendered with isCreateOpen && (...)). The form's
+  submit calls handleSubmit, which builds the payload and calls doCreate.
+  The button is never wired to create with an id, because a new record has no
+  id and no data has been entered yet.
+- Each field is a controlled input (value + onChange backed by useState).
+  Amount and categoryId are held as strings because HTML inputs return
+  strings; handleSubmit converts them with Number(...).
+- The payload matches the Transaction entity: description, amount,
+  transactionDate (YYYY-MM-DD from type="date"), and a nested
+  category: { id }. A bare category number would not deserialize.
+- Category options come from GET /api/categories, loaded by a second
+  useEffect that stays inside the effect (hoisting a state-setting loader out
+  of the effect fails this project's React lint rules).
+- After a successful create, doCreate refetches the list instead of patching
+  local state, so the server remains the source of truth.
+- Add is type="submit" and Cancel is type="button", so Cancel does not submit
+  the form.
+
+Bug diagnosed
+~~~~~~~~~~~~~
+
+Submitting returned 400 Bad Request. Spring's response carries no detail. The
+request's Content-Length was 76 bytes; the smallest possible payload with a
+real 10-character date is 80 bytes, so the Date was empty (transactionDate:
+""), which cannot be parsed as a LocalDate. Probes with an empty date, an
+amount of 0, or a blank description each returned 400 with the same generic
+body. Submitting with all four fields filled worked. This was an inference
+from the byte count plus the probes; the request body itself was not
+captured.
+
+Verification (November 9, 2026)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- npm run lint passed.
+- npm run build passed with 18 modules transformed.
+- ./mvnw test exited 0 (run quietly, so no test count was recorded). It only
+  shows the Spring context loads against PostgreSQL; SummaryServiceTest
+  contains no @Test method and asserts nothing.
+- The project owner confirmed manually in the browser that transactions can
+  be created and the table updates.
+- GitHub main was checked after the push and matches local main at ee047b0.
+- The summary endpoint was not exercised in this update; it is recorded from
+  the committed code, not re-tested.
+
+Current verified state:
+
+- The existing backend CRUD, filtering, and summary code is intact.
+- The React UI lists transactions, deletes them, and creates them through a
+  form with a category dropdown.
+- Local and GitHub main are in sync at ee047b0.
+
+Known gaps
+~~~~~~~~~~
+
+- The form inputs have no required attributes, so blank fields can be
+  submitted and produce a generic 400.
+- doCreate catches errors and sets the page error, which replaces the whole
+  table with "Unable to load transactions: ..." and the form clears and closes
+  even when the save failed. It should report success or failure to
+  handleSubmit.
+- The create form is not a real modal (no overlay or styling).
+- There is no edit UI; updateTransaction and getSummary are unused by the
+  frontend.
+- SummaryServiceTest is an unfinished stub with no @Test and no assertions,
+  and it builds its month with YearMonth.of(26, 7), which is the year 26 AD,
+  not 2026.
+
+Next recommended step:
+
+Write a real SummaryServiceTest first (mock TransactionService, use
+YearMonth.of(2026, 7), assert income, expenses, and balance), then add
+required attributes and success/failure handling to the create form, then
+show the monthly summary cards using the existing getSummary client function.
 
 
 END OF MASTER NOTES
